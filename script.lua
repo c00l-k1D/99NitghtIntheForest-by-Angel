@@ -1,27 +1,26 @@
 -- ================================================================
--- FLY FLY? ULTIMATE | BY ANGEL (v4 – с анализатором еды)
--- Версия 4.0 – сканер еды, копирование в буфер, исправлен телепорт
+-- FLY FLY? | BY ANGEL (v7.0 – телепорт к еде, без ESP и анализа)
 -- ================================================================
 
 -- 1. ЗАГРУЖАЕМ RAYFIELD
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 if not Rayfield then
-    print("❌ Rayfield не загружена! Создаём fallback...")
+    print("❌ Rayfield не загружена! Fallback...")
     local sg = Instance.new("ScreenGui")
     sg.Name = "FlyFlyFallback"
     sg.Parent = game.CoreGui
     local f = Instance.new("Frame")
     f.Size = UDim2.new(0, 300, 0, 150)
     f.Position = UDim2.new(0.5, -150, 0.5, -75)
-    f.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+    f.BackgroundColor3 = Color3.fromRGB(20,20,30)
     f.BorderSizePixel = 0
     f.Parent = sg
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, 0, 1, 0)
+    lbl.Size = UDim2.new(1,0,1,0)
     lbl.BackgroundTransparency = 1
     lbl.Text = "Rayfield не загружена\nНо скрипт работает!\nУправление через консоль (F9)"
-    lbl.TextColor3 = Color3.new(1, 1, 1)
+    lbl.TextColor3 = Color3.new(1,1,1)
     lbl.TextSize = 16
     lbl.TextWrapped = true
     lbl.Font = Enum.Font.Gotham
@@ -33,12 +32,8 @@ end
 local Window = Rayfield:CreateWindow({
     Name = "Fly Fly? | by Angel",
     LoadingTitle = "Загрузка...",
-    LoadingSubtitle = "Ultimate Edition v4",
-    ConfigurationSaving = {
-        Enabled = true,
-        FolderName = "FlyFlyUltimate",
-        FileName = "FlyFlyUltimate"
-    },
+    LoadingSubtitle = "v7.0",
+    ConfigurationSaving = { Enabled = true, FolderName = "FlyFlyAngel", FileName = "FlyFlyAngel" },
     KeySystem = false
 })
 
@@ -64,15 +59,11 @@ local flyConnections = {}
 local noclipConnection = nil
 
 -- 5. ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
-local function getCharacter()
-    return LocalPlayer.Character
-end
-
+local function getCharacter() return LocalPlayer.Character end
 local function getRootPart()
     local char = getCharacter()
     return char and char:FindFirstChild("HumanoidRootPart")
 end
-
 local function getHumanoid()
     local char = getCharacter()
     return char and char:FindFirstChild("Humanoid")
@@ -85,58 +76,47 @@ local function startFly()
     if not root or not hum then return end
     flyEnabled = true
     hum.PlatformStand = true
-
     flyBodyVelocity = Instance.new("BodyVelocity")
-    flyBodyVelocity.MaxForce = Vector3.new(1e9, 1e9, 1e9)
-    flyBodyVelocity.Velocity = Vector3.new(0, 0, 0)
+    flyBodyVelocity.MaxForce = Vector3.new(1e9,1e9,1e9)
+    flyBodyVelocity.Velocity = Vector3.new(0,0,0)
     flyBodyVelocity.Parent = root
-
     flyBodyGyro = Instance.new("BodyGyro")
-    flyBodyGyro.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
+    flyBodyGyro.MaxTorque = Vector3.new(1e9,1e9,1e9)
     flyBodyGyro.Parent = root
     flyBodyGyro.CFrame = root.CFrame
-
-    local moveDir = Vector3.new(0, 0, 0)
+    local moveDir = Vector3.new(0,0,0)
     local shiftPressed = false
-
-    local con1 = UserInputService.InputBegan:Connect(function(input, gp)
+    local con1 = UserInputService.InputBegan:Connect(function(input,gp)
         if gp then return end
-        if input.KeyCode == Enum.KeyCode.W then moveDir = moveDir + Vector3.new(0, 0, -1) end
-        if input.KeyCode == Enum.KeyCode.S then moveDir = moveDir + Vector3.new(0, 0, 1) end
-        if input.KeyCode == Enum.KeyCode.A then moveDir = moveDir + Vector3.new(-1, 0, 0) end
-        if input.KeyCode == Enum.KeyCode.D then moveDir = moveDir + Vector3.new(1, 0, 0) end
-        if input.KeyCode == Enum.KeyCode.Space then moveDir = moveDir + Vector3.new(0, 1, 0) end
-        if input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.RightShift then
-            shiftPressed = true
-        end
+        if input.KeyCode == Enum.KeyCode.W then moveDir = moveDir + Vector3.new(0,0,-1) end
+        if input.KeyCode == Enum.KeyCode.S then moveDir = moveDir + Vector3.new(0,0,1) end
+        if input.KeyCode == Enum.KeyCode.A then moveDir = moveDir + Vector3.new(-1,0,0) end
+        if input.KeyCode == Enum.KeyCode.D then moveDir = moveDir + Vector3.new(1,0,0) end
+        if input.KeyCode == Enum.KeyCode.Space then moveDir = moveDir + Vector3.new(0,1,0) end
+        if input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.RightShift then shiftPressed = true end
     end)
-
-    local con2 = UserInputService.InputEnded:Connect(function(input, gp)
+    local con2 = UserInputService.InputEnded:Connect(function(input,gp)
         if gp then return end
-        if input.KeyCode == Enum.KeyCode.W then moveDir = moveDir - Vector3.new(0, 0, -1) end
-        if input.KeyCode == Enum.KeyCode.S then moveDir = moveDir - Vector3.new(0, 0, 1) end
-        if input.KeyCode == Enum.KeyCode.A then moveDir = moveDir - Vector3.new(-1, 0, 0) end
-        if input.KeyCode == Enum.KeyCode.D then moveDir = moveDir - Vector3.new(1, 0, 0) end
-        if input.KeyCode == Enum.KeyCode.Space then moveDir = moveDir - Vector3.new(0, 1, 0) end
-        if input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.RightShift then
-            shiftPressed = false
-        end
+        if input.KeyCode == Enum.KeyCode.W then moveDir = moveDir - Vector3.new(0,0,-1) end
+        if input.KeyCode == Enum.KeyCode.S then moveDir = moveDir - Vector3.new(0,0,1) end
+        if input.KeyCode == Enum.KeyCode.A then moveDir = moveDir - Vector3.new(-1,0,0) end
+        if input.KeyCode == Enum.KeyCode.D then moveDir = moveDir - Vector3.new(1,0,0) end
+        if input.KeyCode == Enum.KeyCode.Space then moveDir = moveDir - Vector3.new(0,1,0) end
+        if input.KeyCode == Enum.KeyCode.LeftShift or input.KeyCode == Enum.KeyCode.RightShift then shiftPressed = false end
     end)
-
     local con3 = RunService.Heartbeat:Connect(function()
         if not flyEnabled or not root or not root.Parent then return end
         local cam = Workspace.CurrentCamera
-        local forward = cam.CFrame.LookVector * Vector3.new(1, 0, 1)
+        local forward = cam.CFrame.LookVector * Vector3.new(1,0,1)
         forward = forward.Unit
-        local right = cam.CFrame.RightVector * Vector3.new(1, 0, 1)
+        local right = cam.CFrame.RightVector * Vector3.new(1,0,1)
         right = right.Unit
-        local up = Vector3.new(0, 1, 0)
+        local up = Vector3.new(0,1,0)
         local vel = (forward * -moveDir.Z + right * moveDir.X + up * moveDir.Y) * flySpeed
         if shiftPressed then vel = vel - up * flySpeed * 0.5 end
         if flyBodyVelocity then flyBodyVelocity.Velocity = vel end
         if flyBodyGyro then flyBodyGyro.CFrame = cam.CFrame end
     end)
-
     flyConnections = {con1, con2, con3}
 end
 
@@ -146,9 +126,7 @@ local function stopFly()
     if hum then hum.PlatformStand = false end
     if flyBodyVelocity then flyBodyVelocity:Destroy(); flyBodyVelocity = nil end
     if flyBodyGyro then flyBodyGyro:Destroy(); flyBodyGyro = nil end
-    for _, conn in ipairs(flyConnections) do
-        conn:Disconnect()
-    end
+    for _, conn in ipairs(flyConnections) do conn:Disconnect() end
     flyConnections = {}
 end
 
@@ -161,27 +139,61 @@ local function toggleNoclip(state)
             local char = getCharacter()
             if char then
                 for _, part in ipairs(char:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.CanCollide = false
-                    end
+                    if part:IsA("BasePart") then part.CanCollide = false end
                 end
             end
         end)
     else
-        if noclipConnection then
-            noclipConnection:Disconnect()
-            noclipConnection = nil
-        end
+        if noclipConnection then noclipConnection:Disconnect(); noclipConnection = nil end
     end
 end
 
--- 8. ТЕЛЕПОРТ ЕДЫ
-local function teleportFood(keyword)
-    if not keyword or keyword == "" or keyword == "custom" then
-        Rayfield:Notify({ Title = "Ошибка", Content = "Выберите конкретный тип еды", Duration = 2 })
+-- 8. ПОИСК БЛИЖАЙШЕЙ ЕДЫ
+local function findClosestFood(keyword)
+    keyword = keyword:lower()
+    local root = getRootPart()
+    if not root then return nil, math.huge end
+    local pos = root.Position
+    local closest = nil
+    local minDist = math.huge
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        if obj:IsA("BasePart") or obj:IsA("Model") then
+            local name = obj.Name
+            if type(name) == "string" and name:lower():find(keyword) then
+                local objPos
+                if obj:IsA("BasePart") then
+                    objPos = obj.Position
+                elseif obj:IsA("Model") and obj.PrimaryPart then
+                    objPos = obj.PrimaryPart.Position
+                else
+                    local firstPart = obj:FindFirstChildOfClass("BasePart")
+                    if firstPart then objPos = firstPart.Position end
+                end
+                if objPos then
+                    local dist = (objPos - pos).Magnitude
+                    if dist < minDist then
+                        minDist = dist
+                        closest = obj
+                    end
+                end
+            end
+        end
+    end
+    return closest, minDist
+end
+
+-- 9. ТЕЛЕПОРТ ИГРОКА К БЛИЖАЙШЕЙ ЕДЕ
+local function teleportToFood(keyword)
+    if type(keyword) ~= "string" then
+        Rayfield:Notify({ Title = "Ошибка", Content = "Неверный тип ключевого слова", Duration = 2 })
         return
     end
     keyword = keyword:lower()
+    if keyword == "" or keyword == "custom" then
+        Rayfield:Notify({ Title = "Ошибка", Content = "Выберите конкретный тип еды", Duration = 2 })
+        return
+    end
+
     local char = getCharacter()
     if not char then
         Rayfield:Notify({ Title = "Ошибка", Content = "Персонаж не найден", Duration = 2 })
@@ -192,102 +204,109 @@ local function teleportFood(keyword)
         Rayfield:Notify({ Title = "Ошибка", Content = "RootPart не найден", Duration = 2 })
         return
     end
-    local targetPos = root.Position
-    local count = 0
 
-    for _, obj in ipairs(Workspace:GetDescendants()) do
-        local isPart = obj:IsA("BasePart")
-        local isModel = obj:IsA("Model") and obj.PrimaryPart
-        if isPart or isModel then
-            local name = obj.Name:lower()
-            if name:find(keyword) then
-                if not obj:IsDescendantOf(char) then
-                    if isPart then
-                        obj.CFrame = CFrame.new(targetPos + Vector3.new(0, 2, 0))
-                    else
-                        obj.PrimaryPart.CFrame = CFrame.new(targetPos + Vector3.new(0, 2, 0))
-                    end
-                    count = count + 1
-                    task.wait(0.02)
-                end
-            end
-        end
+    local target, dist = findClosestFood(keyword)
+    if not target then
+        Rayfield:Notify({ Title = "Ошибка", Content = "Нет еды с ключевым словом '" .. keyword .. "'", Duration = 2 })
+        return
     end
 
-    if count > 0 then
-        Rayfield:Notify({ Title = "Телепорт еды", Content = "Телепортировано " .. count .. " объектов с '" .. keyword .. "'", Duration = 3 })
+    local targetPart
+    if target:IsA("BasePart") then
+        targetPart = target
+    elseif target:IsA("Model") and target.PrimaryPart then
+        targetPart = target.PrimaryPart
     else
-        Rayfield:Notify({ Title = "Телепорт еды", Content = "Объекты с '" .. keyword .. "' не найдены", Duration = 3 })
+        targetPart = target:FindFirstChildOfClass("BasePart")
     end
+
+    if not targetPart then
+        Rayfield:Notify({ Title = "Ошибка", Content = "Не удалось определить часть для взаимодействия", Duration = 2 })
+        return
+    end
+
+    root.CFrame = targetPart.CFrame + Vector3.new(0, 1, 0)
+    Rayfield:Notify({ Title = "Телепорт", Content = "Перемещён к '" .. keyword .. "'", Duration = 2 })
 end
 
--- 9. АНАЛИЗАТОР ЕДЫ (СКАНИРУЕТ КАРТУ И КОПИРУЕТ СПИСОК)
-local function scanFoodObjects()
-    local keywords = {
-        "food", "berry", "meat", "donut", "cake", "fruit", "bread", "mushroom",
-        "apple", "pizza", "sandwich", "burger", "sushi", "steak", "pie", "cookie",
-        "chocolate", "icecream", "pancake", "waffle", "milk", "egg", "cheese",
-        "ham", "bacon", "sausage", "chicken", "fish", "crab", "lobster", "shrimp",
-        "pasta", "rice", "noodle", "soup", "salad", "taco", "burrito", "nachos",
-        "popcorn", "pretzel", "donut", "cupcake", "muffin", "brownie", "pie",
-        "candy", "lollipop", "gum", "mint", "tea", "coffee", "juice", "soda",
-        "water", "milk", "smoothie", "shake", "pancake", "waffle", "crepe"
-    }
-    local found = {}
+-- 10. СЪЕСТЬ ЕДУ (телепорт + симуляция касания)
+local function eatFood(keyword)
+    if type(keyword) ~= "string" then
+        Rayfield:Notify({ Title = "Ошибка", Content = "Неверный тип ключевого слова", Duration = 2 })
+        return
+    end
+    keyword = keyword:lower()
+    if keyword == "" or keyword == "custom" then
+        Rayfield:Notify({ Title = "Ошибка", Content = "Выберите конкретный тип еды", Duration = 2 })
+        return
+    end
+
     local char = getCharacter()
-    for _, obj in ipairs(Workspace:GetDescendants()) do
-        if obj:IsA("BasePart") or (obj:IsA("Model") and obj.PrimaryPart) then
-            local name = obj.Name:lower()
-            -- Проверяем, содержит ли имя хотя бы одно ключевое слово
-            for _, kw in ipairs(keywords) do
-                if name:find(kw) then
-                    -- Исключаем части персонажа
-                    if not char or not obj:IsDescendantOf(char) then
-                        found[obj.Name] = true
-                    end
-                    break
-                end
-            end
-        end
+    if not char then
+        Rayfield:Notify({ Title = "Ошибка", Content = "Персонаж не найден", Duration = 2 })
+        return
     end
-    local names = {}
-    for name, _ in pairs(found) do
-        table.insert(names, name)
+    local root = getRootPart()
+    if not root then
+        Rayfield:Notify({ Title = "Ошибка", Content = "RootPart не найден", Duration = 2 })
+        return
     end
-    table.sort(names)
-    local result = table.concat(names, ", ")
-    -- Копируем в буфер обмена
-    local success, err = pcall(function()
-        setclipboard(result)
-    end)
-    if success then
-        Rayfield:Notify({ Title = "Анализатор еды", Content = "Найдено " .. #names .. " объектов. Список скопирован в буфер обмена!", Duration = 4 })
+
+    local target, dist = findClosestFood(keyword)
+    if not target then
+        Rayfield:Notify({ Title = "Ошибка", Content = "Нет еды с ключевым словом '" .. keyword .. "'", Duration = 2 })
+        return
+    end
+
+    local targetPart
+    if target:IsA("BasePart") then
+        targetPart = target
+    elseif target:IsA("Model") and target.PrimaryPart then
+        targetPart = target.PrimaryPart
     else
-        Rayfield:Notify({ Title = "Анализатор еды", Content = "Найдено " .. #names .. " объектов. Скопируйте список из консоли (F9)", Duration = 4 })
-        print("=== Найденные объекты еды ===")
-        for _, name in ipairs(names) do
-            print(name)
-        end
-        print("=== Конец списка ===")
+        targetPart = target:FindFirstChildOfClass("BasePart")
+    end
+
+    if not targetPart then
+        Rayfield:Notify({ Title = "Ошибка", Content = "Не удалось определить часть для взаимодействия", Duration = 2 })
+        return
+    end
+
+    -- Телепорт к еде
+    root.CFrame = targetPart.CFrame + Vector3.new(0, 1, 0)
+    task.wait(0.1)
+
+    -- Симуляция касания
+    local playerPart = root
+    local success, err = pcall(function()
+        firetouchinterest(playerPart, targetPart, 0)
+        task.wait(0.05)
+        firetouchinterest(playerPart, targetPart, 1)
+    end)
+
+    if success then
+        Rayfield:Notify({ Title = "Еда", Content = "Съедена!", Duration = 2 })
+    else
+        -- Fallback: эмулируем клавишу E
+        local virtualUser = game:GetService("VirtualUser")
+        virtualUser:CaptureController()
+        virtualUser:SetKeyDown(Enum.KeyCode.E)
+        task.wait(0.1)
+        virtualUser:SetKeyUp(Enum.KeyCode.E)
+        Rayfield:Notify({ Title = "Еда", Content = "Попытка съесть (клавиша E)", Duration = 2 })
     end
 end
 
--- 10. GUI – FLIGHT
+-- 11. GUI – FLIGHT
 FlightTab:CreateToggle({
     Name = "Режим полёта",
     CurrentValue = false,
     Flag = "Fly",
     Callback = function(v)
-        if v then
-            startFly()
-            Rayfield:Notify({ Title = "Полёт", Content = "Включён", Duration = 2 })
-        else
-            stopFly()
-            Rayfield:Notify({ Title = "Полёт", Content = "Выключен", Duration = 2 })
-        end
+        if v then startFly() else stopFly() end
+        Rayfield:Notify({ Title = "Полёт", Content = v and "Включён" or "Выключен", Duration = 2 })
     end
 })
-
 FlightTab:CreateSlider({
     Name = "Скорость полёта",
     Range = {10, 200},
@@ -295,14 +314,12 @@ FlightTab:CreateSlider({
     Suffix = "studs/s",
     CurrentValue = 50,
     Flag = "FlySpeed",
-    Callback = function(v)
-        flySpeed = v
-    end
+    Callback = function(v) flySpeed = v end
 })
 
--- 11. GUI – NOCLIP
+-- 12. GUI – NOCLIP
 NoclipTab:CreateToggle({
-    Name = "Noclip (проход сквозь стены)",
+    Name = "Noclip",
     CurrentValue = false,
     Flag = "Noclip",
     Callback = function(v)
@@ -311,79 +328,83 @@ NoclipTab:CreateToggle({
     end
 })
 
--- 12. GUI – FOOD (расширенный список + кнопка анализа)
+-- 13. GUI – FOOD
 local foodOptions = {
-    "food", "berry", "meat", "donut", "cake", "fruit", "bread", "mushroom",
-    "apple", "pizza", "sandwich", "burger", "sushi", "steak", "pie", "cookie",
-    "chocolate", "icecream", "pancake", "waffle", "milk", "egg", "cheese",
-    "ham", "bacon", "sausage", "chicken", "fish", "crab", "lobster", "shrimp",
-    "pasta", "rice", "noodle", "soup", "salad", "taco", "burrito", "nachos",
-    "popcorn", "pretzel", "cupcake", "muffin", "brownie", "candy", "lollipop",
-    "gum", "mint", "tea", "coffee", "juice", "soda", "water", "smoothie",
-    "shake", "crepe", "custom"
+    "Apple", "Apple.001", "AppleZone", "Apple_Slice", "Apple_SliceZone",
+    "Berry", "BerryZone", "Berry_Cake75", "Bread", "Bread.001",
+    "BreadZone", "Bread_Slice", "Bread_SliceZone", "DesertFruit",
+    "DragonFruit", "Fish", "FoodNpcTestZone", "FoodZone_Ambrozy",
+    "FoodZone_Banana", "FoodZone_GoldApple", "FoodZone_GoldPoop",
+    "FoodZone_Rasberry", "FoodZone_Star", "GoldApple", "Meat",
+    "MeatZone", "MeatZone1", "MeatZone2", "MeatZone3", "Mushroom",
+    "MushroomZone", "Mushroom_2", "Mushroom_2Zone", "Mushroom_2Zone1",
+    "Mushroom_2Zone2", "Mushroom_2Zone3", "Pineapple", "Poop_Food",
+    "Rasberry", "RottenFish", "Strawberry", "StrawberryZone",
+    "WaterMelon", "WaterPond", "WaterPond1", "WaterPond2",
+    "Watermelon", "WatermelonBlue", "custom"
 }
 FoodTab:CreateDropdown({
     Name = "Тип еды",
     Options = foodOptions,
-    CurrentOption = "food",
+    CurrentOption = "Apple",
     Flag = "FoodType",
     Callback = function(option)
         if option == "custom" then
             Rayfield:Notify({ Title = "Ввод", Content = "Введите своё ключевое слово в поле ниже", Duration = 2 })
         end
-        print("[Food] Выбран тип:", option)
     end
 })
-
 FoodTab:CreateInput({
     Name = "Своё ключевое слово",
     PlaceholderText = "Введите название (если выбран custom)",
     CurrentValue = "",
-    Flag = "CustomFoodKeyword",
-    Callback = function(v)
-        print("[Food] Пользовательское слово:", v)
-    end
+    Flag = "CustomFoodKeyword"
 })
-
 FoodTab:CreateButton({
-    Name = "Телепортировать всю еду к себе",
+    Name = "Телепорт к ближайшей еде",
     Callback = function()
-        local selected = Rayfield:GetFlag("FoodType") or "food"
+        local selected = Rayfield.Flags["FoodType"]
+        if type(selected) ~= "string" then selected = "Apple" end
         local keyword = selected
         if selected == "custom" then
-            keyword = Rayfield:GetFlag("CustomFoodKeyword") or ""
-            if keyword == "" then
-                Rayfield:Notify({ Title = "Ошибка", Content = "Введите своё ключевое слово в поле ниже", Duration = 2 })
+            keyword = Rayfield.Flags["CustomFoodKeyword"]
+            if type(keyword) ~= "string" or keyword == "" then
+                Rayfield:Notify({ Title = "Ошибка", Content = "Введите своё ключевое слово", Duration = 2 })
                 return
             end
         end
-        teleportFood(keyword)
+        teleportToFood(keyword)
     end
 })
-
--- КНОПКА АНАЛИЗАТОРА
 FoodTab:CreateButton({
-    Name = "Анализировать еду на карте и скопировать список",
+    Name = "Подойти и съесть еду",
     Callback = function()
-        scanFoodObjects()
+        local selected = Rayfield.Flags["FoodType"]
+        if type(selected) ~= "string" then selected = "Apple" end
+        local keyword = selected
+        if selected == "custom" then
+            keyword = Rayfield.Flags["CustomFoodKeyword"]
+            if type(keyword) ~= "string" or keyword == "" then
+                Rayfield:Notify({ Title = "Ошибка", Content = "Введите своё ключевое слово", Duration = 2 })
+                return
+            end
+        end
+        eatFood(keyword)
     end
 })
 
--- 13. GUI – SETTINGS
+-- 14. GUI – SETTINGS
 SettingsTab:CreateButton({
     Name = "Наш Telegram: t.me/pussydrinking",
     Callback = function()
-        local success, err = pcall(function()
-            setclipboard("https://t.me/pussydrinking")
-        end)
+        local success = pcall(function() setclipboard("https://t.me/pussydrinking") end)
         if success then
-            Rayfield:Notify({ Title = "Telegram", Content = "Ссылка скопирована в буфер обмена!", Duration = 3 })
+            Rayfield:Notify({ Title = "Telegram", Content = "Ссылка скопирована!", Duration = 3 })
         else
             Rayfield:Notify({ Title = "Telegram", Content = "t.me/pussydrinking (скопируйте вручную)", Duration = 4 })
         end
     end
 })
-
 SettingsTab:CreateButton({
     Name = "Закрыть скрипт",
     Callback = function()
@@ -394,23 +415,16 @@ SettingsTab:CreateButton({
         print("🛑 Fly Fly? скрипт закрыт")
     end
 })
-
 SettingsTab:CreateButton({
     Name = "Сбросить настройки",
     Callback = function()
         Rayfield:Notify({ Title = "Сброс", Content = "Перезапустите скрипт", Duration = 2 })
     end
 })
-
-SettingsTab:CreateLabel("Версия: 4.0 (с анализатором)")
+SettingsTab:CreateLabel("Версия: 7.0 (телепорт к еде)")
 SettingsTab:CreateLabel("Автор: Angel")
 SettingsTab:CreateLabel("Telegram: @pussydrinking")
 
--- 14. УВЕДОМЛЕНИЕ О ЗАГРУЗКЕ
-Rayfield:Notify({
-    Title = "Fly Fly? | by Angel",
-    Content = "Скрипт загружен! Используйте анализатор для поиска еды.",
-    Duration = 5
-})
-
-print("✅ Fly Fly? Ultimate v4 загружен!")
+-- 15. ФИНАЛ
+Rayfield:Notify({ Title = "Fly Fly? | by Angel", Content = "Скрипт загружен! Телепорт к еде работает.", Duration = 5 })
+print("✅ Fly Fly? by Angel v7.0 загружен!")
